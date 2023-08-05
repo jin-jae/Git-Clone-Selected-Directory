@@ -56,26 +56,83 @@ fi
     git clone -n --depth=1 --filter=tree:0 $GIT_BASE_URL
     cd ${DIR_ARRAY[3]}
 
+    # 기본 브랜치 경로에서만 가능함
     BASE_BRANCH=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
     echo "debug BASE_BRANCH: $BASE_BRANCH"
 
-    BASE_BRANCH_CHECK=(`echo $BASE_BRANCH | tr '\/' ' '`)
-    CHECK_BRANCH_LEN=${#BASE_BRANCH_CHECK[@]}
+    BRANCHES=($(git branch -r))
+
+    declare -a BRANCHES_WITHOUT_ORIGIN
+
+    for ((var = 0; var < ${#BRANCHES[@]}; var++))
+    do
+        if [[ ${BRANCHES[var]} == origin/* ]]; then
+            BRANCHES_WITHOUT_ORIGIN[var]="${BRANCHES[var]#origin/}"
+        else
+            BRANCHES_WITHOUT_ORIGIN[var]="${BRANCHES[var]}"
+        fi
+    done
+
+    echo "debug BRANCHES :"
+    for BRANCH in "${BRANCHES_WITHOUT_ORIGIN[@]}"; do
+        echo $BRANCH
+    done
+
+    FLAG=0
+    for VARS in "${BRANCHES_WITHOUT_ORIGIN[@]}"; do
+        if [ "$VARS" = "${DIR_ARRAY[5]}" ]; then
+            FLAG=1
+            break
+        fi
+    done
 
     TO_BE_ADDED_ROUTE=""
-    let "I = 5 + CHECK_BRANCH_LEN"
-    for ((var = I; var < DIR_ARRAY_LEN; var++))
-    do
-        TO_BE_ADDED_ROUTE+="${DIR_ARRAY[$var]}/"
-    done
+    if [ "$FLAG" -eq 1 ]; then
+        echo "Can clone with minimum traffic..."
+        BASE_BRANCH_CHECK=(`echo $BASE_BRANCH | tr '\/' ' '`)
+        CHECK_BRANCH_LEN=${#BASE_BRANCH_CHECK[@]}
+
+        let "I = 5 + CHECK_BRANCH_LEN"
+        for ((var = I; var < DIR_ARRAY_LEN; var++))
+        do
+            TO_BE_ADDED_ROUTE+="${DIR_ARRAY[$var]}/"
+        done
+    else
+        echo "Cannot clone with minimum traffic..."
+        echo "Now trying with full clone process..."
+
+        echo "Now moving to git directory..."
+        cd $CLONE_DIRECTORY
+        rm -rf ${DIR_ARRAY[3]}
+        git init ${DIR_ARRAY[3]}
+        cd ${DIR_ARRAY[3]}
+
+        git remote add origin $GIT_BASE_URL
+
+        # sparse checkout 가능하도록 설정
+        git config core.sparsecheckout true
+
+        git sparse-checkout set --no-cone "$TO_BE_ADDED_ROUTE"
+
+        read -p "Enter branch >> " ENTERED_BRANCH
+
+        ENTERED_BRANCH_CHECK=(`echo $ENTERED_BRANCH | tr '\/' ' '`)
+        CHECK_ENTERED_BRANCH_LEN=${#ENTERED_BRANCH_CHECK[@]}
+
+        let "I = 5 + CHECK_ENTERED_BRANCH_LEN"
+        for ((var = I; var < DIR_ARRAY_LEN; var++))
+        do
+            TO_BE_ADDED_ROUTE+="${DIR_ARRAY[$var]}/"
+        done
+    fi
+
     echo "debug TO_BE_ADDED_ROUTE: $TO_BE_ADDED_ROUTE"
 
-    git sparse-checkout set --no-cone "$TO_BE_ADDED_ROUTE"
-
-    git checkout
+    git sparse-checkout set "$TO_BE_ADDED_ROUTE"
 
     # git pull
     git pull origin $BASE_BRANCH
+
 )
 
 # closing message
