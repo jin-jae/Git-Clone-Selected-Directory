@@ -69,7 +69,7 @@ echo ""
             TO_BE_ADDED_ROUTE+="${DIR_ARRAY[$var]}/"
         done
 
-        echo "(debug) TO_BE_ADDED_ROUTE: $TO_BE_ADDED_ROUTE"
+        # echo "(debug) TO_BE_ADDED_ROUTE: $TO_BE_ADDED_ROUTE"
         echo "$TO_BE_ADDED_ROUTE" > .git/info/sparse-checkout
 
         git sparse-checkout set --no-cone $TO_BE_ADDED_ROUTE
@@ -99,7 +99,7 @@ echo ""
             TO_BE_ADDED_ROUTE+="${DIR_ARRAY[$var]}/"
         done
 
-        echo "(debug) TO_BE_ADDED_ROUTE: $TO_BE_ADDED_ROUTE"
+        # echo "(debug) TO_BE_ADDED_ROUTE: $TO_BE_ADDED_ROUTE"
 
         cat /dev/null > .git/info/sparse-checkout
         echo "$TO_BE_ADDED_ROUTE" > .git/info/sparse-checkout
