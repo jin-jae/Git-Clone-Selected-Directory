@@ -5,12 +5,10 @@
 
 # welcome message
 for var in {1..100}
-do echo -n "-"; done
-echo ""
+do echo -n "-"; done; echo ""
 
-echo "Clone git repository's special directory only"
-echo ""
-echo "version 1.0"
+echo "Clone git repository's special directory only"; echo ""
+echo "version 1.1"
 
 for var in {1..100}
 do echo -n "-"; done
@@ -21,14 +19,14 @@ echo ""
 read -p "Enter git repository URL >> " GIT_DIRECTORY
 DIR_ARRAY=(`echo $GIT_DIRECTORY | tr '\/' ' '`)
 DIR_ARRAY_LEN=${#DIR_ARRAY[@]}
-echo "(debug) DIR_ARRAY: ${DIR_ARRAY[@]}"
-echo "(debug) DIR_ARRAY_LEN: $DIR_ARRAY_LEN"
+# echo "(debug) DIR_ARRAY: ${DIR_ARRAY[@]}"
+# echo "(debug) DIR_ARRAY_LEN: $DIR_ARRAY_LEN"
 echo ""
 
 
 # base url (Repository 주소) 얻기
 GIT_BASE_URL="${DIR_ARRAY[0]}//${DIR_ARRAY[1]}/${DIR_ARRAY[2]}/${DIR_ARRAY[3]}"
-echo "(debug) GIT_BASE_URL: $GIT_BASE_URL"
+# echo "(debug) GIT_BASE_URL: $GIT_BASE_URL"
 echo "Now trying to clone \"$GIT_BASE_URL\"..."
 echo ""
 
@@ -40,7 +38,7 @@ if [ -n "$CLONE_DIRECTORY" ]; then
 else
     CLONE_DIRECTORY="$HOME/Code/"
 fi
-echo "(debug) CLONE_DIRECTORY: $CLONE_DIRECTORY"
+# echo "(debug) CLONE_DIRECTORY: $CLONE_DIRECTORY"
 echo "Repository will be cloned to: $CLONE_DIRECTORY"
 echo ""
 
@@ -49,17 +47,16 @@ echo ""
 (
     echo "Now moving to git directory..."
     cd $CLONE_DIRECTORY
-
-    echo "Cloning empty repository..."
     git clone -n --depth=1 --filter=tree:0 $GIT_BASE_URL
+    echo ""
+
     cd ${DIR_ARRAY[3]}
 
     # 기본 브랜치 체크
     BASE_BRANCH=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
-    echo "(debug) BASE_BRANCH: $BASE_BRANCH"
+    # echo "(debug) BASE_BRANCH: $BASE_BRANCH"
 
-    read -p "Now going to clone code from \"$BASE_BRANCH\" branch. (blank + Enter: continue)
-If branch is correct, just press Enter. If not, enter branch name and continue >> " BRANCH_FLAG
+    read -p "Clone from \"$BASE_BRANCH\" branch. If correct, press Enter. If not, enter branch name and press Enter. >> " BRANCH_FLAG
 
     TO_BE_ADDED_ROUTE=""
     if [ -z "$BRANCH_FLAG" ]; then
@@ -75,14 +72,16 @@ If branch is correct, just press Enter. If not, enter branch name and continue >
         echo "(debug) TO_BE_ADDED_ROUTE: $TO_BE_ADDED_ROUTE"
         echo "$TO_BE_ADDED_ROUTE" > .git/info/sparse-checkout
 
+        git sparse-checkout set --no-cone $TO_BE_ADDED_ROUTE
+
         # pull
-        git pull origin $BASE_BRANCH
+        git checkout
     else
         # 일치하지 않는 경우의 처리
-        echo "Now moving to git directory..."
-
+        echo "Recreating repository (to check all branches)..."
         cd $CLONE_DIRECTORY
         rm -rf ${DIR_ARRAY[3]}
+
         git init ${DIR_ARRAY[3]}
         cd ${DIR_ARRAY[3]}
 
